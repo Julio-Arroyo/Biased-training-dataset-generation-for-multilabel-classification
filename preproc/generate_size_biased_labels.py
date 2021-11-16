@@ -5,14 +5,14 @@ print statistics how many times that happened.
 
 
 import os
-import cv2
+# import cv2
 import json
 import random
 import numpy as np
 from format_pascal import catID_to_catName
 from format_pascal import catName_to_catID
 
-data_path = '/Users/jarroyo/OneDrive - California Institute of Technology/Research with Eli Cole/Biased Dataset Generation/data/'
+data_path = '/home/julioarroyo/research Eli and Julio/Biased-training-dataset-generation-for-multilabel-classification/data/'
 pascal_json_path = 'pascal/pascal_cocoformat/pascal_ann.json'
 f = open(data_path + pascal_json_path)
 D = json.load(f)
@@ -86,7 +86,8 @@ def observe_bias(label_matrix, imID_to_catWeights, matrix_idx_2_im_id, num_obser
     from that, I need to know which specific annotation is most likely.
     '''
     label_matrix_biased = np.zeros_like(label_matrix)
-    for row_idx in range(len(label_matrix_biased[0])):
+    (num_images, num_classes) = np.shape(label_matrix_biased)
+    for row_idx in range(num_images):
         curr_im_id = matrix_idx_2_im_id[row_idx]
         cat_weights = imID_to_catWeights[curr_im_id]
         # TODO: this in theory is general for any num_observation, problem is random.choices can repeat
@@ -112,34 +113,34 @@ def get_biased_annotations(imID_to_anns, imID_to_annWeights):
     return biased_annotations
 
 
-def visualize_bias(imID_to_anns, biased_annotations):
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 0.85
-    color = (255, 0, 127)
-    thickness = 2
+# def visualize_bias(imID_to_anns, biased_annotations):
+#     font = cv2.FONT_HERSHEY_SIMPLEX
+#     font_scale = 0.85
+#     color = (255, 0, 127)
+#     thickness = 2
 
-    sample_size = 5
-    indices = [random.randint(0, len(D['annotations']) - 1) for _ in range(sample_size)]
-    sample_image_ids = [D['annotations'][idx]['image_id'] for idx in indices]
-    im_folder_path = '/Users/jarroyo/OneDrive - California Institute of Technology/Research with Eli Cole/Biased Dataset Generation/data/pascal/VOCdevkit/VOC2012/JPEGImages/'
-    for k in range(len(sample_image_ids)):
-        window_name = 'Visualize biased sampling'
-        fully_annotated = cv2.imread(im_folder_path + sample_image_ids[k] + '.jpg')
-        for ann in imID_to_anns[sample_image_ids[k]]:
-            top_left = (ann['bbox'][0], ann['bbox'][1])
-            bottom_right = (ann['bbox'][0] + ann['bbox'][2], ann['bbox'][1] + ann['bbox'][3])
-            fully_annotated = cv2.rectangle(fully_annotated, top_left, bottom_right, color, thickness)
-            cv2.putText(fully_annotated, catID_to_catName[ann['category_id'] - 1], top_left, font, fontScale=font_scale, color=color, thickness=thickness, lineType=cv2.LINE_AA)        
-        partially_annotated = cv2.imread(im_folder_path + sample_image_ids[k] + '.jpg')
-        biased_ann = biased_annotations[sample_image_ids[k]]
-        top_left = (biased_ann['bbox'][0], biased_ann['bbox'][1])
-        bottom_right = (biased_ann['bbox'][0] + biased_ann['bbox'][2], biased_ann['bbox'][1] + biased_ann['bbox'][3])
-        partially_annotated = cv2.rectangle(partially_annotated, top_left, bottom_right, color, thickness)
-        cv2.putText(partially_annotated, catID_to_catName[biased_ann['category_id'] - 1], top_left, font, fontScale=font_scale, color=color, thickness=thickness, lineType=cv2.LINE_AA)
+#     sample_size = 5
+#     indices = [random.randint(0, len(D['annotations']) - 1) for _ in range(sample_size)]
+#     sample_image_ids = [D['annotations'][idx]['image_id'] for idx in indices]
+#     im_folder_path = '/home/julioarroyo/research Eli and Julio/Biased-training-dataset-generation-for-multilabel-classification/data/pascal/VOCdevkit/VOC2012/JPEGImages/'
+#     for k in range(len(sample_image_ids)):
+#         window_name = 'Visualize biased sampling'
+#         fully_annotated = cv2.imread(im_folder_path + sample_image_ids[k] + '.jpg')
+#         for ann in imID_to_anns[sample_image_ids[k]]:
+#             top_left = (ann['bbox'][0], ann['bbox'][1])
+#             bottom_right = (ann['bbox'][0] + ann['bbox'][2], ann['bbox'][1] + ann['bbox'][3])
+#             fully_annotated = cv2.rectangle(fully_annotated, top_left, bottom_right, color, thickness)
+#             cv2.putText(fully_annotated, catID_to_catName[ann['category_id'] - 1], top_left, font, fontScale=font_scale, color=color, thickness=thickness, lineType=cv2.LINE_AA)        
+#         partially_annotated = cv2.imread(im_folder_path + sample_image_ids[k] + '.jpg')
+#         biased_ann = biased_annotations[sample_image_ids[k]]
+#         top_left = (biased_ann['bbox'][0], biased_ann['bbox'][1])
+#         bottom_right = (biased_ann['bbox'][0] + biased_ann['bbox'][2], biased_ann['bbox'][1] + biased_ann['bbox'][3])
+#         partially_annotated = cv2.rectangle(partially_annotated, top_left, bottom_right, color, thickness)
+#         cv2.putText(partially_annotated, catID_to_catName[biased_ann['category_id'] - 1], top_left, font, fontScale=font_scale, color=color, thickness=thickness, lineType=cv2.LINE_AA)
 
-        comparison = np.concatenate((fully_annotated, partially_annotated), axis=1)
-        cv2.imshow(window_name, comparison)
-        cv2.waitKey()
+#         comparison = np.concatenate((fully_annotated, partially_annotated), axis=1)
+#         cv2.imshow(window_name, comparison)
+#         cv2.waitKey()
 
 
 def test_observe_bias(imID_to_catWeights):
@@ -182,7 +183,7 @@ if __name__ == '__main__':
         N = 5
         for i in range(1, N + 1):
             for phase in ['train', 'val']:
-                base_path = '/Users/jarroyo/OneDrive - California Institute of Technology/Research with Eli Cole/Biased Dataset Generation/data/pascal'
+                base_path = data_path + 'pascal/'
                 label_matrix = np.load(os.path.join(base_path, 'formatted_{}_labels.npy'.format(phase)))
                 assert np.max(label_matrix) == 1
                 assert np.min(label_matrix) == 0
@@ -199,34 +200,4 @@ if __name__ == '__main__':
                 np.save(os.path.join(base_path, 'formatted_{}{}_size_bias_labels.npy'.format(phase, i)), biased_matrix)
         
         biased_dataset = get_biased_annotations(imID_to_anns, imID_to_annWeights)
-        visualize_bias(imID_to_anns, biased_dataset)
-
-
-# 5 REALIZATIONS OF THE SAME DATASET
-# MEAN average precision
-# multilabel classification metrics: how do people evaluate, what are the pros and cons
-# get code running with pascal, standard configuration and match on paper
-
-# multilabel classification metrics:
-    # precision
-    # recall
-    # F1: balance between recall and precision
-    # 0/1 loss: 1 if not equal, 0 otherwise.
-    # Hamming Score/ Accuracy: is the fraction of correct predictions compared to the total labels.
-    # Hamming Loss: 
-
-    #Scikit learn:
-        # Coverage error:
-            # average number of labels that have to be included in the final prediction such that all true labels are predicted.
-            # useful if you want to know how many top-scored-labels you have to predict in average without missing any true one. 
-            # The best value of this metrics is thus the average number of true labels.
-        # LRAP (Label ranking average precision): basically measures how many true labels we ranked at what ranking
-        # Ranking loss:
-    
-
-    # Multilabel classification an overview:
-        # hamming loss
-        # accuracy
-        # precision
-        # recall
-        # MAP: area under precision-recall curve
+        # visualize_bias(imID_to_anns, biased_dataset)
