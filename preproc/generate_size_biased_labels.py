@@ -12,7 +12,11 @@ import numpy as np
 from format_pascal import catID_to_catName
 from format_pascal import catName_to_catID
 
-data_path = '/home/julioarroyo/research Eli and Julio/Biased-training-dataset-generation-for-multilabel-classification/data/'
+
+im_folder_path = '/Users/jarroyo/OneDrive - California Institute of Technology/Research with Eli Cole/Biased Dataset Generation/data/pascal/VOCdevkit/VOC2012/JPEGImages/'
+
+
+data_path = '/Users/jarroyo/OneDrive - California Institute of Technology/Research with Eli Cole/Biased Dataset Generation/data/'
 pascal_json_path = 'pascal/pascal_cocoformat/pascal_ann.json'
 f = open(data_path + pascal_json_path)
 D = json.load(f)
@@ -89,18 +93,55 @@ def observe_bias(label_matrix, imID_to_catWeights, image_list_ph, num_observatio
     '''
     label_matrix_biased = np.zeros_like(label_matrix)
     (num_images, num_classes) = np.shape(label_matrix_biased)
+
+    test_size = 8
+    tested_images_indices = random.sample(range(num_images), test_size)
+
     for row_idx in range(num_images):
+        # START: Make the label_matrix_biased
         curr_im_id = image_list_ph[row_idx]
         cat_weights = imID_to_catWeights[curr_im_id]
         # TODO: this in theory is general for any num_observation, problem is random.choices can repeat
         idx_pos = random.choices(list(range(20)), cat_weights, k=num_observations)[0]
-        label_matrix_biased[row_idx, idx_pos] = 1.0
-    # for row_idx in range(num_images):
-    #     curr_im_id = matrix_idx_2_im_id[row_idx]
-    #     cat_weights = imID_to_catWeights[curr_im_id]
-    #     # TODO: this in theory is general for any num_observation, problem is random.choices can repeat
-    #     idx_pos = random.choices(list(range(20)), cat_weights, k=num_observations)[0]
-    #     label_matrix_biased[row_idx, idx_pos] = 1.0
+        label_vector = np.zeros((1, 20))
+        label_vector[0, idx_pos] = 1.0
+        label_matrix_biased[row_idx, :] = label_vector
+        # END: Make the label_matrix_biased
+
+
+        # With some small probability, test this image
+        if row_idx in tested_images_indices:
+            N = 1000
+            frequencies = [0 for _ in range(20)]
+            for _ in range(N):
+                idx_pos = random.choices(list(range(20)), cat_weights, k=num_observations)[0]
+                frequencies[idx_pos] += 1
+            max_freq = float('-inf')
+            best_pos = -1
+            for j in range(len(frequencies)):
+                if frequencies[j] > max_freq:
+                    max_freq = frequencies[j]
+                    best_pos = j
+            print('Image ID: {}'.format(curr_im_id))
+            print('Most often labeled category was {}, which was chosen with probability {}'.format(catID_to_catName[best_pos], max_freq/N))
+            print('The weights were {}'.format(cat_weights))
+
+            # Visualize annotations
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.85
+            color = (255, 0, 127)
+            thickness = 2
+            window_name = 'Visualize biased sampling'
+            fully_annotated = cv2.imread(im_folder_path + curr_im_id + '.jpg')
+
+            imID_to_anns = get_anns_by_imID()
+            for ann in imID_to_anns[curr_im_id]:
+                top_left = (ann['bbox'][0], ann['bbox'][1])
+                bottom_right = (ann['bbox'][0] + ann['bbox'][2], ann['bbox'][1] + ann['bbox'][3])
+                fully_annotated = cv2.rectangle(fully_annotated, top_left, bottom_right, color, thickness)
+                cv2.putText(fully_annotated, catID_to_catName[ann['category_id'] - 1], top_left, font, fontScale=font_scale, color=color, thickness=thickness, lineType=cv2.LINE_AA)        
+            cv2.imshow(window_name, fully_annotated)
+            cv2.waitKey()
     return label_matrix_biased
 
 
@@ -129,7 +170,6 @@ def visualize_bias(imID_to_anns, biased_annotations):
     sample_size = 5
     indices = [random.randint(0, len(D['annotations']) - 1) for _ in range(sample_size)]
     sample_image_ids = [D['annotations'][idx]['image_id'] for idx in indices]
-    im_folder_path = '/home/julioarroyo/research Eli and Julio/Biased-training-dataset-generation-for-multilabel-classification/data/pascal/VOCdevkit/VOC2012/JPEGImages/'
     for k in range(len(sample_image_ids)):
         window_name = 'Visualize biased sampling'
         fully_annotated = cv2.imread(im_folder_path + sample_image_ids[k] + '.jpg')
@@ -174,8 +214,9 @@ def test_observe_bias(imID_to_catWeights):
 
 
 
+
 if __name__ == '__main__':
-    mode = 'test'  # 'test' or 'run'
+    mode = 'run'  # 'test' or 'run'
 
     imID_to_anns = get_anns_by_imID()
     # maybe add a parameter below for kind of bias
@@ -211,31 +252,3 @@ if __name__ == '__main__':
         # visualize_bias(imID_to_anns, biased_dataset)
 
 
-# 5 REALIZATIONS OF THE SAME DATASET
-# MEAN average precision
-# multilabel classification metrics: how do people evaluate, what are the pros and cons
-# get code running with pascal, standard configuration and match on paper
-
-# multilabel classification metrics:
-    # precision
-    # recall
-    # F1: balance between recall and precision
-    # 0/1 loss: 1 if not equal, 0 otherwise.
-    # Hamming Score/ Accuracy: is the fraction of correct predictions compared to the total labels.
-    # Hamming Loss: 
-
-    #Scikit learn:
-        # Coverage error:
-            # average number of labels that have to be included in the final prediction such that all true labels are predicted.
-            # useful if you want to know how many top-scored-labels you have to predict in average without missing any true one. 
-            # The best value of this metrics is thus the average number of true labels.
-        # LRAP (Label ranking average precision): basically measures how many true labels we ranked at what ranking
-        # Ranking loss:
-    
-
-    # Multilabel classification an overview:
-        # hamming loss
-        # accuracy
-        # precision
-        # recall
-        # MAP: area under precision-recall curve
