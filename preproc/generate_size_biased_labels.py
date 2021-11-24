@@ -248,6 +248,7 @@ def test_observe_bias(imID_to_catWeights):
 
 
 
+
 if __name__ == '__main__':
     mode = 'run'  # 'test' or 'run'
 
