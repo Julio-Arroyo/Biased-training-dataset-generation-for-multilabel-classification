@@ -12,8 +12,9 @@ import numpy as np
 from format_pascal import catID_to_catName
 from format_pascal import catName_to_catID
 
-data_path = '/home/julioarroyo/research Eli and Julio/single-positive-multi-label-julio/data/'
+data_path = '/media/julioarroyo/aspen/data/'
 pascal_json_path = 'pascal/pascal_cocoformat/pascal_ann.json'
+coco_path = 'annotations/'
 f = open(data_path + pascal_json_path)
 D = json.load(f)
 SEED = 10
@@ -252,6 +253,7 @@ def test_observe_bias(imID_to_catWeights):
 if __name__ == '__main__':
     mode = 'run'  # 'test' or 'run'
 
+    # THIS IS PASCAL SPECIFIC, REFACTOR TO MAKE IT GENERALIZABLE
     (im_to_cat, image_list) = create_image_list()
     imID_to_anns = get_anns_by_imID(im_to_cat)
 
@@ -265,7 +267,7 @@ if __name__ == '__main__':
         N = 5
         for i in range(1, N + 1):
             for phase in ['train', 'val']:
-                base_path = data_path + 'pascal/'
+                base_path = data_path + 'coco/'
                 label_matrix = np.load(os.path.join(base_path, 'formatted_{}_labels.npy'.format(phase)))
                 
                 assert np.max(label_matrix) == 1

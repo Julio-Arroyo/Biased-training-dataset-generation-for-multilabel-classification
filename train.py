@@ -261,7 +261,7 @@ if __name__ == '__main__':
     P = {}
     
     # Top-level parameters:
-    P['dataset'] = 'pascal' # pascal, coco, nuswide, cub
+    P['dataset'] = 'coco' # pascal, coco, nuswide, cub
     P['loss'] = 'an' # bce, bce_ls, iun, iu, pr, an, an_ls, wan, epr, role
     P['train_mode'] = 'linear_fixed_features' # linear_fixed_features, end_to_end, linear_init
     P['val_set_variant'] = 'clean' # clean, observed
@@ -269,7 +269,7 @@ if __name__ == '__main__':
     # Paths and filenames:
     P['experiment_name'] = 'multi_label_experiment'
     P['load_path'] = './data'
-    P['save_path'] = './results'
+    P['save_path'] = '/media/julioarroyo/aspen/results/'
 
     # Optimization parameters:
     P['lr'] = 1e-4 # learning rate
@@ -331,7 +331,8 @@ if __name__ == '__main__':
             now_str = datetime.datetime.now().strftime("%Y_%m_%d_%X").replace(':','-')
             P['bsize'] = bsize
             P['lr'] = lr
-            P['save_path'] = './results/' + P['experiment_name'] + '_' + now_str + '_' + P['dataset']
+            P['save_path'] = '/media/julioarroyo/aspen/results/' + P['experiment_name'] + '_' + now_str + '_' + P['dataset']
+            # P['save_path'] = './results/' + P['experiment_name'] + '_' + now_str + '_' + P['dataset']
             os.makedirs(P['save_path'], exist_ok=False)
             P_temp = copy.deepcopy(P) # re-set hyperparameter dict
             (feature_extractor, linear_classifier, estimated_labels, logs) = execute_training_run(P_temp, feature_extractor=None, linear_classifier=None)

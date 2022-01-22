@@ -1,1 +1,4 @@
-data/pascal/
+data/
+*.json
+*.png
+*.pyc
